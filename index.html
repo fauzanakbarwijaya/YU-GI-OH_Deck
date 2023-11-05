@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>yugidex</title>
+    <link rel="shortcut icon" href="./public/assets/images/bg_brand.png" type="image/x-icon">
+    <link rel="stylesheet" href="./public/assets/styles/css/bootstrap.min.css">
+    <link rel="stylesheet" href="./public/assets/styles/css/style.css">
+</head>
+
+<body class="bg-dark" style="background-image: url('./public/assets/images/bg_brand.png'); background-attachment: fixed; background-repeat: no-repeat;background-size: cover;">
+    <div id="yugidex" class="container-fluid">
+        <div class="container bg-opacity-75 bg-dark" >
+            <div class="row">
+                <div class="title">
+                    <h1 class="text-white text-center fw-bold mt-3 f-brand">YU-GI-OH</h1>
+                </div>
+
+                <div class="search-poke mt-5 col-md-6 mx-auto">
+                    <form action="">
+                        <input type="search" name="" class="form-control" id=""
+                            placeholder="Search Your Card..." v-model="search">
+                        <label for="" class="form-label text-white mt-md-3">Suggestion : <span v-for="i in suggesCard" @click="viewCard(i.name)">{{ i.name }} | </span></label>
+                    </form>
+                </div>
+            </div>
+            <div class="row mt-5">
+                <div class="col-md-4 details">
+                    <div class="card text-start bg-secondary bg-opacity-0 text-white">
+                        <div v-if="!details">
+                            <p class="text-white">Card Details Here</p>
+                        </div>
+                        <div v-else>
+                            <img :src="selectedCard.data[0].card_images[0].image_url" alt="Card Image" style="width:16em" class="d-block mx-auto">
+                            <div class="card-body">
+                                <h4 class="card-title">{{ selectedCard.data[0].name }}</h4>
+                                <p class="card-text">{{ selectedCard.data[0].desc }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-8 border border-3 border-light rounded p-5">
+                    <div class="row">
+                        <div class="col-md-4" v-for="(card, index) in cardList" :key="index">
+                            <div class="card text-start mb-3" v-for="(item, itemIndex) in card.data"
+                                :key="itemIndex" @click="viewCard(item.name)">
+                                <div class="card-body bg-dark bg-opacity-25">
+                                    <img :src="item.card_images[itemIndex].image_url" style="width: 4rem;"
+                                        class="d-block mx-auto" :alt="item.name">
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <script src="./public/assets/styles/js/bootstrap.bundle.min.js"></script>
+
+    <script type="module">
+        import {
+            createApp
+        } from 'https://unpkg.com/vue@3/dist/vue.esm-browser.js'
+
+        createApp({
+            data() {
+                return {
+                    cardList: [],
+                    details: false,
+                    selectedCard: '',
+                    search :'',
+                    getCard:[],
+                    suggesCard : [],
+                }
+            },
+            methods: {
+                async getlistCard() {
+                    let response = await fetch("https://db.ygoprodeck.com/api/v7/cardinfo.php?num=30&offset=0");
+                    let data = await response.json();
+                    let results = data.data;
+                    results.forEach(item => {
+                        this.getDataCard(item);
+                    });
+                    // console.log(data)
+                },
+                async getDataCard(result) {
+                    let response = await fetch(
+                        `https://db.ygoprodeck.com/api/v7/cardinfo.php?name=${result.name}`);
+                    let data = await response.json();
+
+                    // console.log(data)
+                    this.cardList.push(data)
+                    this.cardList.sort((a, b) => a.id - b.id)
+                },
+                async viewCard(card) {
+                    let response = await fetch(`https://db.ygoprodeck.com/api/v7/cardinfo.php?name=${card}`);
+                    let data = await response.json();
+
+                    this.selectedCard = data
+                    this.details = true
+                    // console.log(data)
+                    // console.log(this.selectedCard.data[0].card_images[0].image_url)
+                },
+                async getallCard(){
+                    let response = await fetch("https://db.ygoprodeck.com/api/v7/cardinfo.php");
+                    let data = await response.json();
+                    let results = data.data;
+
+                    this.getCard = results
+
+                    // console.log(results)
+                }
+            },
+            watch:{
+                search(){
+                    let filter = this.getCard.filter(item => {
+                        return item.name.includes(this.search)
+                    })
+                    
+                    this.suggesCard = filter
+                    // console.log(this.suggesCard)
+                }
+            },
+
+            mounted() {
+                this.getlistCard()
+                this.getallCard()
+
+            }
+        }).mount('#yugidex')
+    </script>
+</body>
+
+</html>
